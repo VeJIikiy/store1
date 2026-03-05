@@ -4,189 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <title>The Kitchen 13 Menu</title>
     <style>
         :root {
             --bg: var(--tg-theme-bg-color, #ffffff);
-            --text: var(--tg-theme-text-color, #222222);
-            --hint: var(--tg-theme-hint-color, #999999);
+            --text: var(--tg-theme-text-color, #222);
+            --hint: var(--tg-theme-hint-color, #999);
             --btn: var(--tg-theme-button-color, #248b65);
-            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --btn-text: var(--tg-theme-button-text-color, #fff);
             --sec-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
         }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        
+        /* Шапка */
+        .header { padding: 15px; text-align: center; background: var(--sec-bg); border-bottom: 1px solid #ddd; }
+        
+        /* Категории */
+        .categories { display: flex; gap: 10px; padding: 10px; overflow-x: auto; sticky: top; background: var(--bg); }
+        .cat-btn { background: var(--sec-bg); border: none; padding: 8px 15px; border-radius: 20px; white-space: nowrap; color: var(--text); }
+        .cat-btn.active { background: var(--btn); color: var(--btn-text); }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0; padding: 0;
-            user-select: none;
-        }
+        /* Сетка товаров */
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .card { background: var(--sec-bg); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 120px; object-fit: cover; }
+        .info { padding: 10px; flex-grow: 1; }
+        .price { color: var(--btn); font-weight: bold; }
+        .add-btn { width: 100%; background: var(--btn); color: var(--btn-text); border: none; border-radius: 8px; padding: 8px; margin-top: 5px; }
 
-        .header {
-            text-align: center;
-            padding: 20px;
-            background: var(--sec-bg);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .categories {
-            display: flex;
-            gap: 10px;
-            padding: 10px;
-            overflow-x: auto;
-            position: sticky;
-            top: 0;
-            background: var(--bg);
-            z-index: 10;
-        }
-
-        .categories::-webkit-scrollbar { display: none; }
-
-        .cat-btn {
-            background: var(--sec-bg);
-            color: var(--text);
-            border: none;
-            padding: 8px 18px;
-            border-radius: 20px;
-            white-space: nowrap;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .cat-btn.active {
-            background: var(--btn);
-            color: var(--btn-text);
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            padding: 12px;
-        }
-
-        .card {
-            background: var(--sec-bg);
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .card img {
-            width: 100%;
-            height: 130px;
-            object-fit: cover;
-            background: #eee;
-        }
-
-        .info {
-            padding: 12px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .price {
-            color: var(--btn);
-            font-weight: 700;
-            font-size: 15px;
-            margin-bottom: 10px;
-        }
-
-        .buy-btn {
-            background: var(--btn);
-            color: var(--btn-text);
-            border: none;
-            border-radius: 10px;
-            padding: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .buy-btn:active { transform: scale(0.95); }
+        /* Экран корзины (скрыт по умолчанию) */
+        #cart-screen { display: none; padding: 20px; }
+        .cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .total { font-size: 20px; font-weight: bold; text-align: right; margin-top: 20px; }
+        .back-btn { background: var(--hint); color: #fff; border: none; border-radius: 8px; padding: 10px; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2 style="margin:0">The Kitchen 13</h2>
-    <div style="font-size:12px; color:var(--hint)">Bali, Indonesia</div>
+<div id="menu-screen">
+    <div class="header">
+        <h2 style="margin:0">The Kitchen 13</h2>
+    </div>
+
+    <div class="categories">
+        <button class="cat-btn active" onclick="filter('all')">All</button>
+        <button class="cat-btn" onclick="filter('coffee')">Coffee</button>
+        <button class="cat-btn" onclick="filter('bakery')">Bakery</button>
+    </div>
+
+    <div class="container" id="catalog"></div>
 </div>
 
-<div class="categories" id="cat-bar">
-    <button class="cat-btn active" onclick="filter('all', event)">All</button>
-    <button class="cat-btn" onclick="filter('coffee', event)">Coffee</button>
-    <button class="cat-btn" onclick="filter('bakery', event)">Bakery</button>
-    <button class="cat-btn" onclick="filter('breakfast', event)">Breakfast</button>
-    <button class="cat-btn" onclick="filter('mains', event)">Mains</button>
+<div id="cart-screen">
+    <h2>Your Order</h2>
+    <div id="cart-list"></div>
+    <div class="total" id="total-price">Total: 0k</div>
+    <button class="back-btn" onclick="toggleScreen('menu')">← Back to Menu</button>
 </div>
-
-<div class="container" id="catalog"></div>
 
 <script>
     let tg = window.Telegram.WebApp;
     tg.expand();
 
-    // Массив товаров (сюда добавляй новые позиции)
-    const items = [
-        { name: "Espresso", price: "25k", cat: "coffee", img: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=300" },
-        { name: "Cappuccino", price: "35k", cat: "coffee", img: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=300" },
-        { name: "Butter Croissant", price: "28k", cat: "bakery", img: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=300" },
-        { name: "Pain au Chocolat", price: "32k", cat: "bakery", img: "https://images.unsplash.com/photo-1530610476181-d83430b64dcd?w=300" },
-        { name: "Avocado Toast", price: "65k", cat: "breakfast", img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=300" },
-        { name: "The 13 Breakfast", price: "85k", cat: "breakfast", img: "https://images.unsplash.com/photo-1496042399014-17f06bb9d820?w=300" },
-        { name: "Nasi Goreng", price: "75k", cat: "mains", img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300" }
+    const products = [
+        { id: 1, name: "Espresso", price: 25, cat: "coffee", img: "https://via.placeholder.com/150?text=Coffee" },
+        { id: 2, name: "Croissant", price: 28, cat: "bakery", img: "https://via.placeholder.com/150?text=Bread" },
+        { id: 3, name: "Cappuccino", price: 35, cat: "coffee", img: "https://via.placeholder.com/150?text=Latte" }
     ];
 
     let cart = [];
 
-    function render(category = 'all') {
-        const root = document.getElementById('catalog');
-        root.innerHTML = '';
-        items.forEach(item => {
-            if (category === 'all' || item.cat === category) {
-                root.innerHTML += `
-                    <div class="card">
-                        <img src="${item.img}" alt="${item.name}">
-                        <div class="info">
-                            <div class="title">${item.name}</div>
-                            <div class="price">${item.price}</div>
-                            <button class="buy-btn" onclick="addToCart('${item.name}')">Add</button>
-                        </div>
-                    </div>`;
-            }
+    function render() {
+        const cat = document.getElementById('catalog');
+        cat.innerHTML = '';
+        products.forEach(p => {
+            cat.innerHTML += `
+                <div class="card">
+                    <img src="${p.img}">
+                    <div class="info">
+                        <div><b>${p.name}</b></div>
+                        <div class="price">${p.price}k</div>
+                        <button class="add-btn" onclick="addToCart(${p.id})">Add</button>
+                    </div>
+                </div>`;
         });
     }
 
-    function filter(category, event) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        render(category);
-    }
-
-    function addToCart(name) {
-        cart.push(name);
-        tg.MainButton.setText("VIEW ORDER (" + cart.length + ")");
+    function addToCart(id) {
+        const item = products.find(p => p.id === id);
+        cart.push(item);
+        tg.MainButton.setText(`VIEW ORDER (${cart.length})`);
         tg.MainButton.show();
-        tg.HapticFeedback.impactOccurred('light');
     }
 
-    // Обработка нажатия на главную кнопку Telegram
+    function toggleScreen(screen) {
+        if (screen === 'cart') {
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('cart-screen').style.display = 'block';
+            showCart();
+            tg.MainButton.setText("CONFIRM ORDER");
+        } else {
+            document.getElementById('menu-screen').style.display = 'block';
+            document.getElementById('cart-screen').style.display = 'none';
+            tg.MainButton.setText(`VIEW ORDER (${cart.length})`);
+        }
+    }
+
+    function showCart() {
+        const list = document.getElementById('cart-list');
+        list.innerHTML = '';
+        let total = 0;
+        cart.forEach(item => {
+            list.innerHTML += `<div class="cart-item"><span>${item.name}</span><b>${item.price}k</b></div>`;
+            total += item.price;
+        });
+        document.getElementById('total-price').innerText = `Total: ${total}k`;
+    }
+
+    // Слушаем главную кнопку Telegram
     tg.onEvent('mainButtonClicked', function() {
-        const orderText = cart.join(", ");
-        tg.sendData("Order: " + orderText);
-        tg.close();
+        if (document.getElementById('menu-screen').style.display !== 'none') {
+            toggleScreen('cart');
+        } else {
+            // Если мы уже в корзине — отправляем боту
+            const orderSummary = cart.map(i => i.name).join(", ");
+            tg.sendData("Order: " + orderSummary);
+            tg.close();
+        }
     });
 
     render();
