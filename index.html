@@ -1,44 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); margin: 0; padding: 20px; }
-        .item { background: var(--tg-theme-secondary-bg-color); border-radius: 15px; padding: 15px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(0,0,0,0.1); }
-        .item img { width: 100%; border-radius: 10px; max-width: 200px; }
-        button { background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; border-radius: 10px; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        h2 { margin: 10px 0 5px 0; font-size: 1.2em; }
-        .price { font-weight: bold; color: #248b65; margin-bottom: 10px; }
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #fff);
+            --text-color: var(--tg-theme-text-color, #222);
+            --hint-color: var(--tg-theme-hint-color, #999);
+            --button-color: var(--tg-theme-button-color, #3390ec);
+            --button-text: var(--tg-theme-button-text-color, #fff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .header {
+            width: 100%; text-align: center; padding: 20px 0;
+            background: var(--secondary-bg);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .container {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 15px; padding: 15px; width: 100%; box-sizing: border-box;
+        }
+
+        .product-card {
+            background: var(--secondary-bg);
+            border-radius: 15px; overflow: hidden;
+            display: flex; flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .product-card img {
+            width: 100%; height: 140px; object-fit: cover;
+            background: #eee;
+        }
+
+        .product-info { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; }
+
+        .product-title { font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+
+        .product-price { color: var(--button-color); font-weight: bold; font-size: 16px; margin-bottom: 10px; }
+
+        .buy-btn {
+            background: var(--button-color); color: var(--button-text);
+            border: none; border-radius: 10px; padding: 10px;
+            font-weight: 600; cursor: pointer; transition: transform 0.1s;
+        }
+
+        .buy-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
-    <h1>Кухонная Барахолка</h1>
+
+<div class="header">
+    <h2 style="margin:0">Барахолка "Кухня"</h2>
+    <span style="color: var(--hint-color); font-size: 12px;">Выбирай и заказывай</span>
+</div>
+
+<div class="container">
+    <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1593613198175-e704a181313e?w=300" alt="Нож">
+        <div class="product-info">
+            <div class="product-title">Нож поварской</div>
+            <div class="product-price">1 500 ₽</div>
+            <button class="buy-btn" onclick="order('Нож поварской')">В корзину</button>
+        </div>
+    </div>
+
+    <div class="product-card">
+        <img src="https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=300" alt="Сковорода">
+        <div class="product-info">
+            <div class="product-title">Сковорода WOK</div>
+            <div class="product-price">2 800 ₽</div>
+            <button class="buy-btn" onclick="order('Сковорода WOK')">В корзину</button>
+        </div>
+    </div>
     
-    <div class="item">
-        <img src="https://via.placeholder.com/150?text=Knife" alt="Нож">
-        <h2>Профессиональный нож</h2>
-        <div class="price">1500 руб.</div>
-        <button onclick="buy('Нож')">Купить</button>
     </div>
 
-    <div class="item">
-        <img src="https://via.placeholder.com/150?text=Pan" alt="Сковорода">
-        <h2>Сковорода чугунная</h2>
-        <div class="price">2800 руб.</div>
-        <button onclick="buy('Сковорода')">Купить</button>
-    </div>
+<script>
+    let tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.setText("ПОСМОТРЕТЬ КОРЗИНУ");
+    tg.MainButton.hide();
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Развернуть на весь экран
+    function order(item) {
+        tg.MainButton.show();
+        tg.sendData("Заказ: " + item);
+        // Можно добавить уведомление, что товар добавлен
+    }
 
-        function buy(name) {
-            // Отправляем данные боту и закрываем окно
-            tg.sendData("Заказ: " + name);
-            tg.close();
-        }
-    </script>
+    tg.onEvent('mainButtonClicked', function(){
+        tg.close();
+    });
+</script>
+
 </body>
 </html>
